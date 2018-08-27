@@ -4,7 +4,7 @@ namespace WPOrg_Cli;
 use WP_Error;
 use WP_Query;
 class Markdown_Import {
-	private static $handbook_manifest = 'https://raw.githubusercontent.com/sagarnasit/manifest/master/handbook.json';
+	private static $handbook_manifest = 'https://raw.githubusercontent.com/EasyEngine/easyengine.github.io/master/bin/handbook-manifest.json';
 	private static $input_name = 'wporg-cli-markdown-source';
 	private static $meta_key = 'wporg_cli_markdown_source';
 	private static $nonce_name = 'wporg-cli-markdown-source-nonce';
@@ -36,8 +36,9 @@ class Markdown_Import {
 			return new WP_Error( 'invalid-http-code', 'Markdown source returned non-200 http code.' );
 		}
 		$manifest = json_decode( wp_remote_retrieve_body( $response ), true );
+
 		if ( ! $manifest ) {
-			return new WP_Error( 'invalid-manifest', 'Manifest did not unfurl properly.' );;
+			return new WP_Error( 'invalid-manifest', 'Manifest did not unfurl properly.' );
 		}
 		// Fetch all handbook posts for comparison
 		$q        = new WP_Query( array(
@@ -249,10 +250,10 @@ class Markdown_Import {
 			$title    = $matches[1];
 			$markdown = preg_replace( '/^#\s(.+)/', '', $markdown );
 		}
+
 		// Transform to HTML and save the post
-		jetpack_require_lib( 'markdown' );
-		$parser    = new \WPCom_GHF_Markdown_Parser;
-		$html      = $parser->transform( $markdown );
+		$parser = new \Parsedown();
+		$html      = $parser->text( $markdown );
 		$post_data = array(
 			'ID'           => $post_id,
 			'post_content' => wp_filter_post_kses( wp_slash( $html ) ),

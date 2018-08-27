@@ -16,7 +16,7 @@ class Handbook {
 		if ( ! $markdown_source ) {
 			return $title;
 		}
-		return $title . ' <a class="github-edit" href="' . esc_url( $markdown_source ) . '"><img src="' . esc_url( plugins_url( 'assets/images/github-mark.svg', dirname( __FILE__ ) ) ) . '"> <span>Edit</span></a>';
+		return $title . ' <a class="github-edit" href="' . esc_url( $markdown_source ) . '"><img src="' . esc_url( plugins_url( '/images/github-mark.png', __DIR__ ) ) . '"> <span>Edit</span></a>';
 	}
 	/**
 	 * WP-CLI Handbook pages are maintained in the GitHub repo, so the edit

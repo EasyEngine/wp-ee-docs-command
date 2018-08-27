@@ -7,6 +7,7 @@
  * Author URI:  http://wordpress.org/
  * License:     GPLv2 or later
  */
+require_once  __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/inc/class-markdown.php';
 require_once __DIR__ . '/inc/class-handbook.php';
 require_once __DIR__ . '/inc/class-shortcodes.php';
