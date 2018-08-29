@@ -17,15 +17,11 @@ class Markdown_Import {
 	 */
 	public static function action_init() {
 
-//		if ( ! wp_next_scheduled( 'wporg_cli_manifest_import' ) ) {
-//
-//			wp_schedule_event( time(), 'hourly', 'wporg_cli_manifest_import' );
-//		}
-//		if ( ! wp_next_scheduled( 'wporg_cli_markdown_import' ) ) {
-//			wp_schedule_event( time(), 'hourly', 'wporg_cli_markdown_import' );
-//		}
-		apply_filters( 'wporg_cli_manifest_import', 'action_wporg_cli_manifest_import' );
-		apply_filters( 'wporg_cli_markdown_import', 'action_wporg_cli_markdown_import' );
+		if ( ! wp_next_scheduled( 'wporg_cli_all_import' ) ) {
+
+			wp_schedule_event( time(), 'hourly', 'wporg_cli_all_import' );
+		}
+//		apply_filters( 'wporg_cli_all_import', 'action_wporg_cli_manifest_import' );
 	}
 
 	public static function action_wporg_cli_manifest_import() {
@@ -86,6 +82,9 @@ class Markdown_Import {
 		if ( class_exists( 'WP_CLI' ) ) {
 			\WP_CLI::success( "Successfully created {$created} handbook pages." );
 		}
+
+		// Run markdown importer after creating successful posts.
+		apply_filters( 'wporg_cli_markdown_import', 'action_wporg_cli_markdown_import' );
 	}
 
 	/**
@@ -120,7 +119,6 @@ class Markdown_Import {
 		) );
 		$ids     = $q->posts;
 		$success = 0;
-
 		foreach ( $ids as $id ) {
 			$ret = self::update_post_from_markdown_source( $id );
 			if ( class_exists( 'WP_CLI' ) ) {

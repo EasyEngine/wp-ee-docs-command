@@ -51,7 +51,7 @@ add_action( 'init', 'ee_register_handbook_cpt' );
  */
 add_action( 'init', array( 'WPOrg_Cli\Markdown_Import', 'action_init' ) );
 add_action( 'init', array( 'WPOrg_Cli\Shortcodes', 'action_init' ) );
-add_action( 'wporg_cli_manifest_import', array( 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_manifest_import' ) );
+add_action( 'wporg_cli_all_import', array( 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_manifest_import' ) );
 add_action( 'wporg_cli_markdown_import', array( 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_markdown_import' ) );
 add_action( 'load-post.php', array( 'WPOrg_Cli\Markdown_Import', 'action_load_post_php' ) );
 add_action( 'edit_form_after_title', array( 'WPOrg_Cli\Markdown_Import', 'action_edit_form_after_title' ) );
