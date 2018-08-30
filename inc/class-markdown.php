@@ -9,9 +9,6 @@ class Markdown_Import {
 	private static $meta_key = 'wporg_cli_markdown_source';
 	private static $nonce_name = 'wporg-cli-markdown-source-nonce';
 	private static $submit_name = 'wporg-cli-markdown-import';
-	private static $supported_post_types = array( 'handbook' );
-	private static $posts_per_page = 100;
-
 	/**
 	 * Register our cron task if it doesn't already exist
 	 */
@@ -19,10 +16,13 @@ class Markdown_Import {
 
 		if ( ! wp_next_scheduled( 'wporg_cli_all_import' ) ) {
 
-			wp_schedule_event( time(), 'hourly', 'wporg_cli_all_import' );
+			apply_filters( 'wporg_cli_all_import', 'action_wporg_cli_manifest_import' );
+			wp_schedule_event( time(), 'daily', 'wporg_cli_all_import' );
 		}
-//		apply_filters( 'wporg_cli_all_import', 'action_wporg_cli_manifest_import' );
 	}
+	private static $supported_post_types = array( 'handbook' );
+
+	private static $posts_per_page = 100;
 
 	public static function action_wporg_cli_manifest_import() {
 		$response = wp_remote_get( self::$handbook_manifest );
