@@ -3,7 +3,7 @@ namespace WPOrg_Cli;
 use WP_Error;
 use WP_Query;
 class Markdown_Import {
-	private static $command_manifest = 'https://raw.githubusercontent.com/EasyEngine/easyengine.github.io/master/bin/handbook-manifest.json';
+	private static $command_manifest = 'https://raw.githubusercontent.com/EasyEngine/easyengine.github.io/master/bin/commands-manifest.json';
 	private static $input_name = 'wporg-cli-markdown-source';
 	private static $meta_key = 'wporg_cli_markdown_source';
 	private static $nonce_name = 'wporg-cli-markdown-source-nonce';
@@ -14,7 +14,6 @@ class Markdown_Import {
 	public static function action_init() {
 
 		if ( ! wp_next_scheduled( 'wporg_cli_all_import' ) ) {
-//			var_dump("check");die;
 			apply_filters( 'wporg_cli_all_import', 'action_wporg_cli_manifest_import' );
 			wp_schedule_event( time(), 'daily', 'wporg_cli_all_import' );
 		}
@@ -25,7 +24,6 @@ class Markdown_Import {
 
 	public static function action_wporg_cli_manifest_import() {
 		$response = wp_remote_get( self::$command_manifest );
-//		var_dump($response);die;
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		} else if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
