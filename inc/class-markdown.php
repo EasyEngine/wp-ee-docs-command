@@ -1,10 +1,9 @@
 <?php
-
 namespace WPOrg_Cli;
 use WP_Error;
 use WP_Query;
 class Markdown_Import {
-	private static $handbook_manifest = 'https://raw.githubusercontent.com/EasyEngine/easyengine.github.io/master/bin/handbook-manifest.json';
+	private static $command_manifest = 'https://raw.githubusercontent.com/EasyEngine/easyengine.github.io/master/bin/handbook-manifest.json';
 	private static $input_name = 'wporg-cli-markdown-source';
 	private static $meta_key = 'wporg_cli_markdown_source';
 	private static $nonce_name = 'wporg-cli-markdown-source-nonce';
@@ -15,17 +14,18 @@ class Markdown_Import {
 	public static function action_init() {
 
 		if ( ! wp_next_scheduled( 'wporg_cli_all_import' ) ) {
-
+//			var_dump("check");die;
 			apply_filters( 'wporg_cli_all_import', 'action_wporg_cli_manifest_import' );
 			wp_schedule_event( time(), 'daily', 'wporg_cli_all_import' );
 		}
 	}
-	private static $supported_post_types = array( 'handbook' );
+	private static $supported_post_types = array( 'commands' );
 
 	private static $posts_per_page = 100;
 
 	public static function action_wporg_cli_manifest_import() {
-		$response = wp_remote_get( self::$handbook_manifest );
+		$response = wp_remote_get( self::$command_manifest );
+//		var_dump($response);die;
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		} else if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
@@ -36,7 +36,7 @@ class Markdown_Import {
 		if ( ! $manifest ) {
 			return new WP_Error( 'invalid-manifest', 'Manifest did not unfurl properly.' );
 		}
-		// Fetch all handbook posts for comparison
+		// Fetch all command posts for comparison
 		$q        = new WP_Query( array(
 			'post_type'      => self::$supported_post_types,
 			'post_status'    => 'publish',
@@ -80,7 +80,7 @@ class Markdown_Import {
 			}
 		}
 		if ( class_exists( 'WP_CLI' ) ) {
-			\WP_CLI::success( "Successfully created {$created} handbook pages." );
+			\WP_CLI::success( "Successfully created {$created} command pages." );
 		}
 
 		// Run markdown importer after creating successful posts.
@@ -88,11 +88,11 @@ class Markdown_Import {
 	}
 
 	/**
-	 * Create a new handbook page from the manifest document
+	 * Create a new command page from the manifest document
 	 */
 	private static function create_post_from_manifest_doc( $doc, $post_parent = null ) {
 		$post_data = array(
-			'post_type'   => 'handbook',
+			'post_type'   => 'commands',
 			'post_status' => 'publish',
 			'post_parent' => $post_parent,
 			'post_title'  => sanitize_text_field( wp_slash( $doc['title'] ) ),
@@ -132,7 +132,7 @@ class Markdown_Import {
 		}
 		if ( class_exists( 'WP_CLI' ) ) {
 			$total = count( $ids );
-			\WP_CLI::success( "Successfully updated {$success} of {$total} handbook pages." );
+			\WP_CLI::success( "Successfully updated {$success} of {$total} command pages." );
 		}
 	}
 

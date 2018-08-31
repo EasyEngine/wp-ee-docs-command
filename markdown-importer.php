@@ -7,48 +7,19 @@
  * Author URI:  http://wordpress.org/
  * License:     GPLv2 or later
  */
-require_once  __DIR__ . '/vendor/autoload.php';
+
+require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/inc/class-markdown.php';
 require_once __DIR__ . '/inc/class-handbook.php';
 require_once __DIR__ . '/inc/class-shortcodes.php';
+require_once __DIR__ . '/post-types/post-type-commands.php';
+require_once __DIR__ . '/post-types/post-type-handbook.php';
 
-// register handbook cpt
-function ee_register_handbook_cpt() {
-	$args = array(
-		'labels'              => array(
-			'name'               => __( 'Handbook', 'pmc-soaps' ),
-			'singular_name'      => __( 'Handbook', 'pmc-soaps' ),
-			'all_items'          => __( 'All HandbookS', 'pmc-soaps' ),
-			'add_new'            => __( 'Add New', 'pmc-soaps' ),
-			'add_new_item'       => __( 'Add New Handbook', 'pmc-soaps' ),
-			'edit_item'          => __( 'Edit Handbook', 'pmc-soaps' ),
-			'new_item'           => __( 'New Handbook', 'pmc-soaps' ),
-			'view_item'          => __( 'View Handbook', 'pmc-soaps' ),
-			'search_items'       => __( 'Search Handbook', 'pmc-soaps' ),
-			'not_found'          => __( 'No Handbook found', 'pmc-soaps' ),
-			'not_found_in_trash' => __( 'No Handbook found in Trash', 'pmc-soaps' ),
-			'menu_name'          => __( 'Handbook', 'pmc-soaps' ),
-		),
-		'public'              => true,
-		'exclude_from_search' => false,
-		'show_in_nav_menus'   => false,
-		'publicly_queryable'  => true,
-		'has_archive'         => true,
-		'supports'            => array( 'title', 'editor', 'author', ),
-		'taxonomies'          => array( 'shows' ),
-		'menu_icon'           => 'dashicons-admin-generic',
-		'rewrite'             => array(
-			'slug' => 'handbook',
-		),
-	);
-
-	register_post_type( 'handbook', $args );
-}
-
-add_action( 'init', 'ee_register_handbook_cpt' );
 /**
  * Registry of actions and filters
  */
+\WPOrg_Cli\Post_Types\Post_Type_Commands::get_instance();
+\WPOrg_Cli\Post_Types\Post_Type_Handbook::get_instance();
 add_action( 'init', array( 'WPOrg_Cli\Markdown_Import', 'action_init' ) );
 add_action( 'init', array( 'WPOrg_Cli\Shortcodes', 'action_init' ) );
 add_action( 'wporg_cli_all_import', array( 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_manifest_import' ) );
