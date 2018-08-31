@@ -6,7 +6,7 @@ class Post_Type_Handbook {
 	/**
 	 * @var string $post_type
 	 */
-	public $post_type = null;
+	public $post_type = 'handbook';
 
 	/**
 	 * @var object Singleton Object.
@@ -27,7 +27,6 @@ class Post_Type_Handbook {
 	 * Post_Type_Handbook constructor.
 	 */
 	public function __construct() {
-		$this->post_type = 'handbook';
 		add_action( 'init', array( $this, 'ee_register_post_type' ) );
 	}
 

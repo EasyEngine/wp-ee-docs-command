@@ -6,7 +6,7 @@ class Post_Type_Commands {
 	/**
 	 * @var string $post_type
 	 */
-	public $post_type = null;
+	public $post_type = 'commands';
 
 	/**
 	 * @var object Singleton Object.
@@ -27,7 +27,6 @@ class Post_Type_Commands {
 	 * Post_Type_Commands constructor.
 	 */
 	public function __construct() {
-		$this->post_type = 'commands';
 		add_action( 'init', array( $this, 'ee_register_post_type' ) );
 	}
 

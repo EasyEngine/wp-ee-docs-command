@@ -15,11 +15,13 @@ require_once __DIR__ . '/inc/class-shortcodes.php';
 require_once __DIR__ . '/post-types/post-type-commands.php';
 require_once __DIR__ . '/post-types/post-type-handbook.php';
 
+// invoking CPTs.
+\WPOrg_Cli\Post_Types\Post_Type_Commands::get_instance();
+\WPOrg_Cli\Post_Types\Post_Type_Handbook::get_instance();
+
 /**
  * Registry of actions and filters
  */
-\WPOrg_Cli\Post_Types\Post_Type_Commands::get_instance();
-\WPOrg_Cli\Post_Types\Post_Type_Handbook::get_instance();
 add_action( 'init', array( 'WPOrg_Cli\Markdown_Import', 'action_init' ) );
 add_action( 'init', array( 'WPOrg_Cli\Shortcodes', 'action_init' ) );
 add_action( 'wporg_cli_all_import', array( 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_manifest_import' ) );
