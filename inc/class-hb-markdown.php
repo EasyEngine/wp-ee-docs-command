@@ -2,27 +2,18 @@
 namespace WPOrg_Cli;
 use WP_Error;
 use WP_Query;
-class Markdown_Import {
-	private static $command_manifest = 'https://raw.githubusercontent.com/EasyEngine/handbook/master/bin/commands-manifest.json';
+class Markdown_Hb_Import {
+	private static $command_manifest = 'https://raw.githubusercontent.com/EasyEngine/easyengine.github.io/master/bin/handbook-manifest.json';
 	private static $input_name = 'wporg-cli-markdown-source';
 	private static $meta_key = 'wporg_cli_markdown_source';
 	private static $nonce_name = 'wporg-cli-markdown-source-nonce';
 	private static $submit_name = 'wporg-cli-markdown-import';
-	/**
-	 * Register our cron task if it doesn't already exist
-	 */
-	public static function action_init() {
 
-		if ( ! wp_next_scheduled( 'wporg_cli_all_import' ) ) {
-			apply_filters( 'wporg_cli_all_import', 'action_wporg_cli_manifest_import' );
-			wp_schedule_event( time(), 'daily', 'wporg_cli_all_import' );
-		}
-	}
-	private static $supported_post_types = array( 'commands' );
+	private static $supported_post_types = array( 'handbook' );
 
 	private static $posts_per_page = 100;
 
-	public static function action_wporg_cli_manifest_import() {
+	public static function action_wporg_cli_hb_manifest_import() {
 		$response = wp_remote_get( self::$command_manifest );
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -42,7 +33,6 @@ class Markdown_Import {
 		) );
 		$existing = $q->posts;
 		$created  = 0;
-
 		foreach ( $manifest as $doc ) {
 			// Already exists
 			if ( wp_filter_object_list( $existing, array( 'post_name' => $doc['slug'] ) ) ) {
@@ -71,6 +61,7 @@ class Markdown_Import {
 				}
 				$post_parent = $parent->ID;
 			}
+
 			$post = self::create_post_from_manifest_doc( $doc, $post_parent );
 			if ( $post ) {
 				$created++;
@@ -82,9 +73,7 @@ class Markdown_Import {
 		}
 
 		// Run markdown importer after creating successful posts.
-		apply_filters( 'wporg_cli_markdown_import', 'action_wporg_cli_markdown_import' );
-		//@todo: remove this after code enhancement.
-		apply_filters( 'wporg_cli_hb_all_import', array('WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_manifest_import' ) );
+		apply_filters( 'wporg_cli_hb_markdown_import', 'action_wporg_cli_hb_markdown_import' );
 	}
 
 	/**
@@ -92,14 +81,13 @@ class Markdown_Import {
 	 */
 	private static function create_post_from_manifest_doc( $doc, $post_parent = null ) {
 		$post_data = array(
-			'post_type'   => 'commands',
+			'post_type'   => 'handbook',
 			'post_status' => 'publish',
 			'post_parent' => $post_parent,
 			'post_title'  => sanitize_text_field( wp_slash( $doc['title'] ) ),
 			'post_name'   => sanitize_title_with_dashes( $doc['slug'] ),
 		);
 		$post_id   = wp_insert_post( $post_data );
-
 		if ( ! $post_id ) {
 			return false;
 		}
@@ -110,7 +98,7 @@ class Markdown_Import {
 		return get_post( $post_id );
 	}
 
-	public static function action_wporg_cli_markdown_import() {
+	public static function action_wporg_cli_hb_markdown_import() {
 		$q       = new WP_Query( array(
 			'post_type'      => self::$supported_post_types,
 			'post_status'    => 'publish',
@@ -169,11 +157,11 @@ class Markdown_Import {
 		$markdown_source = get_post_meta( $post->ID, self::$meta_key, true );
 		?>
 		<label>Markdown source: <input
-					type="text"
-					name="<?php echo esc_attr( self::$input_name ); ?>"
-					value="<?php echo esc_attr( $markdown_source ); ?>"
-					placeholder="Enter a URL representing a markdown file to import"
-					size="50" />
+				type="text"
+				name="<?php echo esc_attr( self::$input_name ); ?>"
+				value="<?php echo esc_attr( $markdown_source ); ?>"
+				placeholder="Enter a URL representing a markdown file to import"
+				size="50" />
 		</label> <?php
 		if ( $markdown_source ) :
 			$update_link = add_query_arg( array(

@@ -10,6 +10,7 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/inc/class-markdown.php';
+require_once __DIR__ . '/inc/class-hb-markdown.php';
 require_once __DIR__ . '/inc/class-handbook.php';
 require_once __DIR__ . '/inc/class-shortcodes.php';
 require_once __DIR__ . '/post-types/post-type-commands.php';
@@ -19,6 +20,10 @@ require_once __DIR__ . '/post-types/post-type-handbook.php';
 \WPOrg_Cli\Post_Types\Post_Type_Commands::get_instance();
 \WPOrg_Cli\Post_Types\Post_Type_Handbook::get_instance();
 
+// handbook actions and filters
+add_action( 'wporg_cli_hb_markdown_import', array( 'WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_markdown_import' ) );
+add_action( 'wporg_cli_hb_all_import', array( 'WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_manifest_import' ) );
+//apply_filters( 'wporg_cli_hb_all_import', array('WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_manifest_import' ) );
 /**
  * Registry of actions and filters
  */
