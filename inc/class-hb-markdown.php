@@ -3,7 +3,7 @@ namespace WPOrg_Cli;
 use WP_Error;
 use WP_Query;
 class Markdown_Hb_Import {
-	private static $command_manifest = 'https://raw.githubusercontent.com/EasyEngine/easyengine.github.io/master/bin/handbook-manifest.json';
+	private static $command_manifest = EE_DOC_OUTPUT_DIR . '/bin/handbook-manifest.json';
 	private static $input_name = 'wporg-cli-markdown-source';
 	private static $meta_key = 'wporg_cli_markdown_source';
 	private static $nonce_name = 'wporg-cli-markdown-source-nonce';

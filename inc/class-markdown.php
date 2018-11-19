@@ -3,7 +3,8 @@ namespace WPOrg_Cli;
 use WP_Error;
 use WP_Query;
 class Markdown_Import {
-	private static $command_manifest = 'https://raw.githubusercontent.com/EasyEngine/handbook/master/bin/commands-manifest.json';
+
+	private static $command_manifest = EE_DOC_OUTPUT_DIR . '/bin/commands-manifest.json';
 	private static $input_name = 'wporg-cli-markdown-source';
 	private static $meta_key = 'wporg_cli_markdown_source';
 	private static $nonce_name = 'wporg-cli-markdown-source-nonce';
@@ -13,23 +14,39 @@ class Markdown_Import {
 	 */
 	public static function action_init() {
 
-		if ( ! wp_next_scheduled( 'wporg_cli_all_import' ) ) {
-			apply_filters( 'wporg_cli_all_import', 'action_wporg_cli_manifest_import' );
-			wp_schedule_event( time(), 'daily', 'wporg_cli_all_import' );
-		}
 	}
 	private static $supported_post_types = array( 'commands' );
 
 	private static $posts_per_page = 100;
 
 	public static function action_wporg_cli_manifest_import() {
-		$response = wp_remote_get( self::$command_manifest );
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		} else if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return new WP_Error( 'invalid-http-code', 'Markdown source returned non-200 http code.' );
+
+		if ( ! defined( 'WP_CLI' ) || empty( WP_CLI ) ) {
+			return new WP_Error( 'wp-cli-only', 'Function should be run from wp cli only.' );
 		}
-		$manifest = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( ! is_dir( EE_DOC_OUTPUT_DIR ) ) {
+			mkdir( EE_DOC_OUTPUT_DIR );
+		}
+
+		if ( ! file_exists( EE_PHAR_FILE ) ) {
+			return new WP_Error( 'ee-phar-not-found', 'EasyEngine v4 phar file not found at location: ' . EE_PHAR_FILE . '. Please add it and try it again' );
+		}
+
+		shell_exec( 'php ' . EE_PHAR_FILE . ' handbook gen-all ' . EE_DOC_OUTPUT_DIR );
+
+		$ee_root_dir = rtrim( getenv( 'HOME' ), '/\\' ) . '/easyengine';
+
+		if ( is_dir( $ee_root_dir ) ) {
+			shell_exec( 'rm -r ' . $ee_root_dir );
+		}
+
+		$response = file_get_contents( self::$command_manifest );
+		if ( empty( $response ) ) {
+			return new WP_Error( 'empty-json', 'Markdown source not found.' );
+		}
+
+		$manifest = json_decode( $response, true );
 
 		if ( ! $manifest ) {
 			return new WP_Error( 'invalid-manifest', 'Manifest did not unfurl properly.' );
@@ -231,15 +248,13 @@ class Markdown_Import {
 		}
 
 		// Transform GitHub repo HTML pages into their raw equivalents
-		$markdown_source = preg_replace( '#https?://github\.com/([^/]+/[^/]+)/blob/(.+)#', 'https://raw.githubusercontent.com/$1/$2', $markdown_source );
-		$markdown_source = add_query_arg( 'v', time(), $markdown_source );
-		$response        = wp_remote_get( $markdown_source );
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		} else if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return new WP_Error( 'invalid-http-code', 'Markdown source returned non-200 http code.' );
+		$markdown_source = preg_replace( '#https?://github\.com/([^/]+/[^/]+)/blob/master/(.+)#', '$2', $markdown_source );
+		$markdown_source = EE_DOC_OUTPUT_DIR . '/' . $markdown_source;
+		$response        = file_exists( $markdown_source ) ? file_get_contents( $markdown_source ) : '';
+		if ( empty( $response ) ) {
+			return new WP_Error( 'empty-file', 'Markdown source is empty.' );
 		}
-		$markdown = wp_remote_retrieve_body( $response );
+		$markdown = $response;
 
 		// Strip YAML doc from the header
 		$markdown = preg_replace( '#^---(.+)---#Us', '', $markdown );
@@ -273,4 +288,23 @@ class Markdown_Import {
 		}
 		return $markdown_source;
 	}
+}
+
+/**
+ * Generate docs and create it as posts.
+ *
+ * ## EXAMPLES
+ *
+ *     # Get value from config
+ *     $ wp generate-command gen-all
+ *
+ * @subcommand gen-all
+ *
+ */
+function generate_ee_docs() {
+	\WPOrg_Cli\Markdown_Import::action_wporg_cli_manifest_import();
+}
+
+if ( defined( 'WP_CLI') && WP_CLI ) {
+	\WP_CLI::add_command( 'generate-command', __NAMESPACE__ . '\generate_ee_docs' );
 }

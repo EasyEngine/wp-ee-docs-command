@@ -8,6 +8,9 @@
  * License:     GPLv2 or later
  */
 
+define( 'EE_DOC_OUTPUT_DIR', __DIR__ . '/docs' );
+define( 'EE_PHAR_FILE', __DIR__ . '/easyengine.phar' );
+
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/inc/class-markdown.php';
 require_once __DIR__ . '/inc/class-hb-markdown.php';
