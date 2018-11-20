@@ -248,11 +248,9 @@ class Markdown_Import {
 		}
 
 		// Transform GitHub repo HTML pages into their raw equivalents
-		$markdown_source = preg_replace( '#https?://github\.com/([^/]+/[^/]+)/blob/master/(.+)#', '$2', $markdown_source );
-		$markdown_source = EE_DOC_OUTPUT_DIR . '/' . $markdown_source;
-		$response        = file_exists( $markdown_source ) ? file_get_contents( $markdown_source ) : '';
+		$response = file_exists( $markdown_source ) ? file_get_contents( $markdown_source ) : '';
 		if ( empty( $response ) ) {
-			return new WP_Error( 'empty-file', 'Markdown source is empty.' );
+			return new WP_Error( 'empty-file', 'Markdown source is empty. File: ' . $markdown_source );
 		}
 		$markdown = $response;
 

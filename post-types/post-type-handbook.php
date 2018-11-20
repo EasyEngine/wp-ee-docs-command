@@ -50,12 +50,18 @@ class Post_Type_Handbook {
 				'not_found_in_trash' => __( 'No Handbook found in Trash', 'pmc-soaps' ),
 				'menu_name'          => __( 'Handbook', 'pmc-soaps' ),
 			),
+			'rewrite'             => array(
+				'slug'       => 'handbook',
+				'with_front' => false
+			),
+			'show_in_rest'        => true,
 			'public'              => true,
 			'exclude_from_search' => false,
-			'show_in_nav_menus'   => false,
+			'show_in_nav_menus'   => true,
 			'publicly_queryable'  => true,
 			'has_archive'         => true,
-			'supports'            => array( 'title', 'editor', 'author', ),
+			'supports'            => array( 'title', 'editor', 'excerpt', 'author', 'page-attributes' ),
+			'hierarchical'        => true,
 			'taxonomies'          => array( 'shows' ),
 			'menu_icon'           => 'dashicons-admin-generic',
 		);
