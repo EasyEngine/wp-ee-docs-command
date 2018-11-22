@@ -81,7 +81,7 @@ class Post_Type_Handbook {
 
 		if ( ! empty( $github_links ) ) {
 			$temp_content = $content;
-			$content      = $github_links;
+			$content      = empty( $github_links ) ? '' : '<p>' . $github_links . '</p>';
 			$content      .= $temp_content;
 		}
 
