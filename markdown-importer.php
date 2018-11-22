@@ -8,6 +8,7 @@
  * License:     GPLv2 or later
  */
 
+define( 'EE_MARKDOWN_PLUGIN_DIR', __DIR__  );
 define( 'EE_DOC_OUTPUT_DIR', __DIR__ . '/docs' );
 define( 'EE_PHAR_FILE', __DIR__ . '/easyengine.phar' );
 

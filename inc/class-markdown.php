@@ -60,15 +60,31 @@ class Markdown_Import {
 		$existing = $q->posts;
 		$created  = 0;
 
+		// TODO: Custom change in generated doc. Need to fix it in data/markdown generation.
+		foreach ( $manifest as $key => $doc ) {
+			if ( 'ee site reload --type=html' === $doc['title'] ) {
+				$manifest[ $key ]['title'] = 'ee site reload';
+			}
+
+			if ( 'ee site restart --type=html' === $doc['title'] ) {
+				$manifest[ $key ]['title'] = 'ee site restart';
+			}
+
+			if ( 'ee site create --type=html' === $doc['title'] ) {
+				$manifest[ $key ]['title'] = 'ee site create';
+			}
+		}
+
 		foreach ( $manifest as $doc ) {
+
 			// Already exists
-			if ( wp_filter_object_list( $existing, array( 'post_name' => $doc['slug'] ) ) ) {
+			if ( wp_filter_object_list( $existing, array( 'post_title' => sanitize_text_field( wp_slash( $doc['title'] ) ) ) ) ) {
 				continue;
 			}
 			$post_parent = null;
 			if ( ! empty( $doc['parent'] ) ) {
 				// Find the parent in the existing set
-				$parents = wp_filter_object_list( $existing, array( 'post_name' => $doc['parent'] ) );
+				$parents = wp_filter_object_list( $existing, array( 'post_title' => sanitize_text_field( wp_slash( $manifest[ $doc['parent'] ]['title'] ) ) ) );
 				if ( ! empty( $parents ) ) {
 					$parent = array_shift( $parents );
 				} else {
@@ -247,6 +263,10 @@ class Markdown_Import {
 			return new WP_Error( 'missing-jetpack-require-lib', 'jetpack_require_lib() is missing on system.' );
 		}
 
+		// Moved to local directory markdown file location.
+		$markdown_source = preg_replace( '#https?://github\.com/([^/]+/[^/]+)/blob/master/(.+)#', '$2', $markdown_source );
+//		$markdown_source = EE_DOC_OUTPUT_DIR . '/' . $markdown_source;
+
 		// Transform GitHub repo HTML pages into their raw equivalents
 		$response = file_exists( $markdown_source ) ? file_get_contents( $markdown_source ) : '';
 		if ( empty( $response ) ) {
@@ -265,9 +285,44 @@ class Markdown_Import {
 		// Transform to HTML and save the post
 		$parser = new \Parsedown();
 		$html      = $parser->text( $markdown );
+
+		// TODO: Custom change in generated doc. Need to fix it in data/markdown generation.
+		$html = str_replace( '<h1>', '<h2>', $html );
+		$html = str_replace( '</h1>', '</h2>', $html );
+
+		$prepend_text = '';
+		$post_excerpt = '';
+
+		// TODO: Custom change in generated doc. Need to fix it in data/markdown generation.
+		if ( 'ee site create --type=html' === $title || 'ee site create' === $title ) {
+			$prepend_text = '<h1>ee site create -–type=html</h1>';
+			$post_excerpt = 'Runs site installation with provided site type.';
+			$title        = 'ee site create';
+		}
+
+		// TODO: Custom change in generated doc. Need to fix it in data/markdown generation.
+		if ( 'ee site restart --type=html' === $title || 'ee site restart' === $title ) {
+			$temp_html = explode( '<h2>ee site restart --type=wp</h2>', $html );
+			$html      = $temp_html[1];
+			$title     = 'ee site restart';
+		}
+
+		// TODO: Custom change in generated doc. Need to fix it in data/markdown generation.
+		if ( 'ee site reload --type=html' === $title || 'ee site reload' === $title ) {
+			$temp_html = explode( '<h2>ee site reload --type=wp</h2>', $html );
+			$html      = $temp_html[1];
+			$title     = 'ee site reload';
+		}
+
+		if ( ! empty( $prepend_text ) ) {
+			$temp_html = $html;
+			$html      = $prepend_text . $temp_html;
+		}
+
 		$post_data = array(
 			'ID'           => $post_id,
 			'post_content' => wp_filter_post_kses( wp_slash( $html ) ),
+			'post_excerpt' => $post_excerpt,
 		);
 		if ( ! is_null( $title ) ) {
 			$post_data['post_title'] = sanitize_text_field( wp_slash( $title ) );
@@ -291,18 +346,18 @@ class Markdown_Import {
 /**
  * Generate docs and create it as posts.
  *
+ * @subcommand commands
+ *
  * ## EXAMPLES
  *
  *     # Get value from config
  *     $ wp generate-command gen-all
  *
- * @subcommand gen-all
- *
  */
-function generate_ee_docs() {
+function generate_ee_docs( $args, $assoc_arg ) {
 	\WPOrg_Cli\Markdown_Import::action_wporg_cli_manifest_import();
 }
 
 if ( defined( 'WP_CLI') && WP_CLI ) {
-	\WP_CLI::add_command( 'generate-command', __NAMESPACE__ . '\generate_ee_docs' );
+	\WP_CLI::add_command( 'ee-docs', __NAMESPACE__ . '\generate_ee_docs' );
 }
