@@ -119,7 +119,7 @@ class Handbook {
 			return $content;
 		}
 		$anchors = array();
-		$doc     = new DOMDocument();
+		$doc     = new \DOMDocument();
 		// START LibXML error management.
 		// Modify state
 		$libxml_previous_state = libxml_use_internal_errors( true );
@@ -159,10 +159,10 @@ class Handbook {
 	 *
 	 * @since 0.1.0
 	 */
-	function add_the_anchor_styles() {
+	public static function add_the_anchor_styles() {
 		if ( is_singular() ) {
 			wp_enqueue_style( 'dashicons' );
-			wp_enqueue_style( 'anchored-header', EE_MARKDOWN_PLUGIN_DIR . '/css/anchored-header.css', array( 'dashicons' ) );
+			wp_enqueue_style( 'anchored-header', EE_ANCHOR_CSS . '/anchored-header.css', array( 'dashicons' ) );
 		}
 	}
 }

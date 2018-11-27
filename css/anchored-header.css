@@ -9,7 +9,7 @@ h6[id]:hover a.anchorlink:before {
     content: "\f103"; /*dashicons-admin-links*/
     font-size: smaller;
     text-decoration: none;
-    vertical-align: middle;
+    vertical-align: baseline;
 }
 
 a.anchorlink {
