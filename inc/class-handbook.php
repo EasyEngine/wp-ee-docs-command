@@ -103,4 +103,66 @@ class Handbook {
 		$markdown_source = str_replace( '/blob/master/', '/edit/master/', $markdown_source );
 		return $markdown_source;
 	}
+
+	/**
+	 * Using DOMDocument, parse the content and add anchors to headers (H1-H6)
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string $content The content
+	 *
+	 * @return string          the content, updated if the content has H1-H6
+	 */
+	public static function add_the_anchor_links( $content ) {
+
+		if ( ! is_singular() || '' == $content ) {
+			return $content;
+		}
+		$anchors = array();
+		$doc     = new \DOMDocument();
+		// START LibXML error management.
+		// Modify state
+		$libxml_previous_state = libxml_use_internal_errors( true );
+		$doc->loadHTML( mb_convert_encoding( $content, 'HTML-ENTITIES', 'UTF-8' ) );
+		// handle errors
+		libxml_clear_errors();
+		// restore
+		libxml_use_internal_errors( $libxml_previous_state );
+		// END LibXML error management.
+
+		foreach ( array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ) as $h ) {
+			$headings = $doc->getElementsByTagName( $h );
+			foreach ( $headings as $heading ) {
+				$a       = $doc->createElement( 'a' );
+				$newnode = $heading->appendChild( $a );
+				$newnode->setAttribute( 'class', 'anchorlink dashicons-before' );
+				// @codingStandardsIgnoreStart
+				// $heading->nodeValue is from an external libray. Ignore the standard check sinice it doesn't fit the WordPress-Core standard
+				$slug = $tmpslug = sanitize_title( $heading->nodeValue );
+				// @codingStandardsIgnoreEnd
+				$i = 2;
+				while ( false !== in_array( $slug, $anchors ) ) {
+					$slug = sprintf( '%s-%d', $tmpslug, $i ++ );
+				}
+				$anchors[] = $slug;
+				$heading->setAttribute( 'id', $slug );
+				$newnode->setAttribute( 'href', '#' . $slug );
+			}
+		}
+
+		return $doc->saveHTML();
+	}
+
+	/**
+	 * Enable dashicons on the front-end
+	 * Load style
+	 *
+	 * @since 0.1.0
+	 */
+	public static function add_the_anchor_styles() {
+		if ( is_singular() ) {
+			wp_enqueue_style( 'dashicons' );
+			wp_enqueue_style( 'anchored-header', EE_ANCHOR_CSS . '/anchored-header.css', array( 'dashicons' ) );
+		}
+	}
 }

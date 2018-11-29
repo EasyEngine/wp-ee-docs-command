@@ -11,7 +11,7 @@
 define( 'EE_MARKDOWN_PLUGIN_DIR', __DIR__  );
 define( 'EE_DOC_OUTPUT_DIR', __DIR__ . '/docs' );
 define( 'EE_PHAR_FILE', __DIR__ . '/easyengine.phar' );
-
+define( 'EE_ANCHOR_CSS', plugin_dir_url( __FILE__ ) . '/css' );
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/inc/class-markdown.php';
 require_once __DIR__ . '/inc/class-hb-markdown.php';
@@ -42,6 +42,8 @@ add_filter( 'cron_schedules', array( 'WPOrg_Cli\Markdown_Import', 'filter_cron_s
 add_filter( 'the_title', array( 'WPOrg_Cli\Handbook', 'filter_the_title_edit_link' ), 10, 2 );
 add_filter( 'get_edit_post_link', array( 'WPOrg_Cli\Handbook', 'redirect_edit_link_to_github' ), 10, 3 );
 add_filter( 'o2_filter_post_actions', array( 'WPOrg_Cli\Handbook', 'redirect_o2_edit_link_to_github' ), 11, 2 );
+add_filter( 'the_content', array( 'WPOrg_Cli\Handbook', 'add_the_anchor_links' ) );
+add_action( 'wp_enqueue_scripts', array( 'WPOrg_Cli\Handbook', 'add_the_anchor_styles' ) );
 add_action( 'wp_head', function(){
 	?>
 	<style>
