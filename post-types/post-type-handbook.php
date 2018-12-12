@@ -41,7 +41,6 @@ class Post_Type_Handbook {
 
 		return array(
 			'handbook',
-			'page',
 		);
 	}
 
@@ -69,14 +68,9 @@ class Post_Type_Handbook {
 
 		$github_links = '';
 
-		if ( function_exists( 'get_the_github_view_link' ) ) {
-			$view_url     = get_the_github_view_url();
-			$github_links .= sprintf( '<a style="margin-right: 10px;" href="%s">View this post on GitHub.</a>', esc_url( $view_url ) );
-		}
-
 		if ( function_exists( 'get_the_github_edit_link' ) ) {
 			$edit_url = get_the_github_edit_url();
-			$github_links .= sprintf( '<a href="%s">Edit this post on GitHub.</a>', esc_url( $edit_url ) );
+			$github_links .= sprintf( '<a href="%s">Edit this on Github</a>', esc_url( $edit_url ) );
 		}
 
 		if ( ! empty( $github_links ) ) {
