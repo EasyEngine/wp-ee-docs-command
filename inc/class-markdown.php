@@ -281,7 +281,7 @@ class Markdown_Import {
 
 		// TODO: Custom change in generated doc. Need to fix it in data/markdown generation.
 		if ( 'ee site create --type=html' === $title || 'ee site create' === $title ) {
-			$prepend_text = '<h1>ee site create -–type=html</h1>';
+			$prepend_text = '<h2>ee site create -–type=html</h2>';
 			$post_excerpt = 'Runs site installation with provided site type.';
 			$title        = 'ee site create';
 		}
