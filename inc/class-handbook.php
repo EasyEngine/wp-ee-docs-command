@@ -115,7 +115,7 @@ class Handbook {
 	 */
 	public static function add_the_anchor_links( $content ) {
 
-		if ( ! is_singular() || '' == $content ) {
+		if ( ! is_singular( array( 'commands', 'handbook', 'post' ) ) || '' == $content ) {
 			return $content;
 		}
 		$anchors = array();
