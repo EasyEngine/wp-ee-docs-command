@@ -75,6 +75,8 @@ class Post_Type_Commands {
 
 		$subcommands_content = '';
 
+		$subcommands_exists = false;
+
 		if ( $subcommands->have_posts() ) {
 			$subcommands_content .= '<h3 id="subcommands">SUBCOMMANDS</h3>';
 			$subcommands_content .= '<table class="wp-block-table ee-commands-table">';
@@ -92,6 +94,8 @@ class Post_Type_Commands {
 				if ( $post_id === get_the_ID() ) {
 					continue;
 				}
+
+				$subcommands_exists = true;
 
 				$subcommands_content .= '<tr>';
 				$subcommands_content .= sprintf( '<td><a href="%s">%s</a></td>',
@@ -117,7 +121,7 @@ class Post_Type_Commands {
 
 		if ( count( $content_parts ) > 1 ) {
 			$content           = $content_parts[0];
-			$content           .= $subcommands_content;
+			$content           .= empty( $subcommands_exists ) ? '' : $subcommands_content;
 			$global_parameters = empty( $content_parts[1] ) ? '' : '<h3>GLOBAL PARAMETERS</h3>' . $content_parts[1];
 			$global_parameters = str_replace( '<table>', '<table class="wp-block-table ee-global-parameter-table">', $global_parameters );
 			$global_parameters = str_replace( 'style="text-align: left"', '', $global_parameters );
@@ -125,7 +129,7 @@ class Post_Type_Commands {
 			$content           .= $global_parameters;
 		} else {
 			$content = $content_parts[0];
-			$content .= $subcommands_content;
+			$content .= empty( $subcommands_exists ) ? '' : $subcommands_content;
 		}
 
 		return $content;
@@ -157,6 +161,11 @@ class Post_Type_Commands {
 	 * @return string The path of the template to include.
 	 */
 	function ee_template_include( $template ) {
+
+		if ( is_singular( $this->post_type ) ) {
+			remove_filter( 'the_excerpt', 'wptexturize' );
+			remove_filter( 'the_content', 'wptexturize' );
+		}
 
 		if ( ! is_post_type_archive( $this->post_type ) ) {
 			return $template;
