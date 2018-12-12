@@ -25,21 +25,7 @@ class Markdown_Import {
 			return new WP_Error( 'wp-cli-only', 'Function should be run from wp cli only.' );
 		}
 
-		if ( ! is_dir( EE_DOC_OUTPUT_DIR ) ) {
-			mkdir( EE_DOC_OUTPUT_DIR );
-		}
-
-		if ( ! file_exists( EE_PHAR_FILE ) ) {
-			return new WP_Error( 'ee-phar-not-found', 'EasyEngine v4 phar file not found at location: ' . EE_PHAR_FILE . '. Please add it and try it again' );
-		}
-
-		shell_exec( 'php ' . EE_PHAR_FILE . ' handbook gen-all ' . EE_DOC_OUTPUT_DIR );
-
-		$ee_root_dir = rtrim( getenv( 'HOME' ), '/\\' ) . '/easyengine';
-
-		if ( is_dir( $ee_root_dir ) ) {
-			shell_exec( 'rm -r ' . $ee_root_dir );
-		}
+		\WP_CLI::run_command( array( 'ee', 'gen-docs' ) );
 
 		$response = file_get_contents( self::$command_manifest );
 		if ( empty( $response ) ) {
@@ -351,7 +337,7 @@ class Markdown_Import {
  * ## EXAMPLES
  *
  *     # Get value from config
- *     $ wp generate-command gen-all
+ *     $ wp ee-docs commands
  *
  */
 function generate_ee_docs( $args, $assoc_arg ) {

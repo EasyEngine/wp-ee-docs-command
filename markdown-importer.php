@@ -10,12 +10,14 @@
 
 define( 'EE_MARKDOWN_PLUGIN_DIR', __DIR__  );
 define( 'EE_DOC_OUTPUT_DIR', __DIR__ . '/docs' );
+define( 'EE_DOWNLOAD_PHAR_URL', 'https://raw.githubusercontent.com/EasyEngine/easyengine-builds/master/phar/easyengine-nightly.phar' );
 define( 'EE_PHAR_FILE', __DIR__ . '/easyengine.phar' );
 define( 'EE_ANCHOR_CSS', plugin_dir_url( __FILE__ ) . '/css' );
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/inc/class-markdown.php';
 require_once __DIR__ . '/inc/class-hb-markdown.php';
 require_once __DIR__ . '/inc/class-handbook.php';
+require_once __DIR__ . '/inc/docs.php';
 require_once __DIR__ . '/inc/class-shortcodes.php';
 require_once __DIR__ . '/post-types/post-type-commands.php';
 require_once __DIR__ . '/post-types/post-type-handbook.php';
