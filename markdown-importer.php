@@ -10,7 +10,7 @@
 
 define( 'EE_MARKDOWN_PLUGIN_DIR', __DIR__  );
 define( 'EE_DOC_OUTPUT_DIR', __DIR__ . '/docs' );
-define( 'EE_DOWNLOAD_PHAR_URL', 'https://raw.githubusercontent.com/EasyEngine/easyengine-builds/master/phar/easyengine-nightly.phar' );
+define( 'EE_DOWNLOAD_PHAR_URL', 'https://raw.githubusercontent.com/EasyEngine/easyengine-builds/master/phar/easyengine.phar' );
 define( 'EE_PHAR_FILE', __DIR__ . '/easyengine.phar' );
 define( 'EE_ANCHOR_CSS', plugin_dir_url( __FILE__ ) . '/css' );
 require_once __DIR__ . '/vendor/autoload.php';
