@@ -138,7 +138,8 @@ class Handbook {
 				$newnode->setAttribute( 'class', 'anchorlink dashicons-before' );
 				// @codingStandardsIgnoreStart
 				// $heading->nodeValue is from an external libray. Ignore the standard check sinice it doesn't fit the WordPress-Core standard
-				$slug = $tmpslug = sanitize_title( $heading->nodeValue );
+				$node_value = preg_replace( "/[^A-Za-z0-9\- ]/", '', $heading->nodeValue );
+				$slug = $tmpslug = sanitize_title( $node_value );
 				// @codingStandardsIgnoreEnd
 				$i = 2;
 				while ( false !== in_array( $slug, $anchors ) ) {
