@@ -14,8 +14,8 @@ get_header();
 				<table class="wp-block-table ee-commands-table">
 					<thead>
 					<tr>
-						<th><?php es_html_e( 'Command', 'ee-markdown-importer' ); ?></th>
-						<th><?php es_html_e( 'Description', 'ee-markdown-importer' ); ?></th>
+						<th><?php esc_html_e( 'Command', 'ee-markdown-importer' ); ?></th>
+						<th><?php esc_html_e( 'Description', 'ee-markdown-importer' ); ?></th>
 					</tr>
 					</thead>
 					<tbody>
