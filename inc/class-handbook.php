@@ -249,7 +249,7 @@ class Handbook {
 				'anchored-header',
 				EE_ANCHOR_CSS . '/anchored-header.css',
 				[ 'dashicons' ],
-				filemtime( EE_MARKDOWN_PLUGIN_DIR . 'css/anchored-header.css' )
+				filemtime( EE_MARKDOWN_PLUGIN_DIR . '/css/anchored-header.css' )
 			);
 		}
 	}
