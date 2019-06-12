@@ -1,6 +1,8 @@
 <?php
 /**
  * The command cpt archive template file
+ *
+ * @package ee-markdown-importer
  */
 
 get_header();
@@ -11,10 +13,10 @@ get_header();
 			<ul>
 			<?php
 			wp_list_pages(
-				array(
+				[
 					'title_li'  => '',
-					'post_type' => 'handbook'
-				)
+					'post_type' => 'handbook',
+				]
 			);
 			?>
 			</ul>

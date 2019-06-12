@@ -1,53 +1,56 @@
 <?php
 /**
  * Plugin name: Easy-Engine Markdown Importer.
- * Description: Import markdown from github repo to wordpress site.
+ * Description: Import markdown from github repo to WordPress site.
  * Version:     0.1.0
  * Author:      WordPress.org
  * Author URI:  http://wordpress.org/
  * License:     GPLv2 or later
+ *
+ * @package ee-markdown-importer
  */
 
-define( 'EE_MARKDOWN_PLUGIN_DIR', __DIR__  );
+define( 'EE_MARKDOWN_PLUGIN_DIR', __DIR__ );
 define( 'EE_DOC_OUTPUT_DIR', __DIR__ . '/docs' );
 define( 'EE_DOWNLOAD_PHAR_URL', 'https://raw.githubusercontent.com/EasyEngine/easyengine-builds/master/phar/easyengine.phar' );
 define( 'EE_PHAR_FILE', __DIR__ . '/easyengine.phar' );
 define( 'EE_ANCHOR_CSS', plugin_dir_url( __FILE__ ) . '/css' );
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/inc/class-markdown.php';
-require_once __DIR__ . '/inc/class-hb-markdown.php';
+require_once __DIR__ . '/inc/class-markdown-import.php';
+require_once __DIR__ . '/inc/class-markdown-hb-import.php';
 require_once __DIR__ . '/inc/class-handbook.php';
-require_once __DIR__ . '/inc/docs.php';
+require_once __DIR__ . '/inc/class-docs.php';
 require_once __DIR__ . '/inc/class-shortcodes.php';
-require_once __DIR__ . '/post-types/post-type-commands.php';
-require_once __DIR__ . '/post-types/post-type-handbook.php';
+require_once __DIR__ . '/post-types/class-post-type-commands.php';
+require_once __DIR__ . '/post-types/class-post-type-handbook.php';
 
 // invoking CPTs.
 \WPOrg_Cli\Post_Types\Post_Type_Commands::get_instance();
 \WPOrg_Cli\Post_Types\Post_Type_Handbook::get_instance();
 
-// handbook actions and filters
-add_action( 'wporg_cli_hb_markdown_import', array( 'WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_markdown_import' ) );
-add_action( 'wporg_cli_hb_all_import', array( 'WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_manifest_import' ) );
-//apply_filters( 'wporg_cli_hb_all_import', array('WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_manifest_import' ) );
+// handbook actions and filters.
+add_action( 'wporg_cli_hb_markdown_import', [ 'WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_markdown_import' ] );
+add_action( 'wporg_cli_hb_all_import', [ 'WPOrg_Cli\Markdown_Hb_Import', 'action_wporg_cli_hb_manifest_import' ] );
+
 /**
- * Registry of actions and filters
+ * Registry of actions and filters.
  */
-add_action( 'init', array( 'WPOrg_Cli\Markdown_Import', 'action_init' ) );
-add_action( 'init', array( 'WPOrg_Cli\Shortcodes', 'action_init' ) );
-add_action( 'wporg_cli_all_import', array( 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_manifest_import' ) );
-add_action( 'wporg_cli_markdown_import', array( 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_markdown_import' ) );
-add_action( 'load-post.php', array( 'WPOrg_Cli\Markdown_Import', 'action_load_post_php' ) );
-// add_action( 'edit_form_after_title', array( 'WPOrg_Cli\Markdown_Import', 'action_edit_form_after_title' ) );
-add_action( 'save_post', array( 'WPOrg_Cli\Markdown_Import', 'action_save_post' ) );
-add_filter( 'cron_schedules', array( 'WPOrg_Cli\Markdown_Import', 'filter_cron_schedules' ) );
-add_filter( 'the_title', array( 'WPOrg_Cli\Handbook', 'filter_the_title_edit_link' ), 10, 2 );
-add_filter( 'get_edit_post_link', array( 'WPOrg_Cli\Handbook', 'redirect_edit_link_to_github' ), 10, 3 );
-add_filter( 'o2_filter_post_actions', array( 'WPOrg_Cli\Handbook', 'redirect_o2_edit_link_to_github' ), 11, 2 );
-add_filter( 'the_content', array( 'WPOrg_Cli\Handbook', 'add_the_anchor_links' ) );
-add_action( 'wp_enqueue_scripts', array( 'WPOrg_Cli\Handbook', 'add_the_anchor_styles' ) );
-add_action( 'wp_head', function(){
-	?>
+add_action( 'init', [ 'WPOrg_Cli\Markdown_Import', 'action_init' ] );
+add_action( 'init', [ 'WPOrg_Cli\Shortcodes', 'action_init' ] );
+add_action( 'wporg_cli_all_import', [ 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_manifest_import' ] );
+add_action( 'wporg_cli_markdown_import', [ 'WPOrg_Cli\Markdown_Import', 'action_wporg_cli_markdown_import' ] );
+add_action( 'load-post.php', [ 'WPOrg_Cli\Markdown_Import', 'action_load_post_php' ] );
+add_action( 'save_post', [ 'WPOrg_Cli\Markdown_Import', 'action_save_post' ] );
+add_filter( 'cron_schedules', [ 'WPOrg_Cli\Markdown_Import', 'filter_cron_schedules' ] );
+add_filter( 'the_title', [ 'WPOrg_Cli\Handbook', 'filter_the_title_edit_link' ], 10, 2 );
+add_filter( 'get_edit_post_link', [ 'WPOrg_Cli\Handbook', 'redirect_edit_link_to_github' ], 10, 3 );
+add_filter( 'o2_filter_post_actions', [ 'WPOrg_Cli\Handbook', 'redirect_o2_edit_link_to_github' ], 11, 2 );
+add_filter( 'the_content', [ 'WPOrg_Cli\Handbook', 'add_the_anchor_links' ] );
+add_action( 'wp_enqueue_scripts', [ 'WPOrg_Cli\Handbook', 'add_the_anchor_styles' ] );
+add_action(
+	'wp_head',
+	function() {
+		?>
 	<style>
 		pre code {
 			line-height: 16px;
@@ -117,5 +120,6 @@ add_action( 'wp_head', function(){
 			max-width: 240px;
 		}
 	</style>
-	<?php
-});
+		<?php
+	}
+);

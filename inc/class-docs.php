@@ -1,10 +1,25 @@
 <?php
+/**
+ * File to add docs related WP_CLI commands.
+ *
+ * @package ee-markdown-importer
+ */
+
 namespace WPOrg_Cli;
 
+/**
+ * Class to load Docs related WP_CLI command.
+ */
 class Docs {
 
+	/**
+	 * Contain output directory path.
+	 *
+	 * @var string
+	 */
 	public $output_dir = EE_DOC_OUTPUT_DIR;
 
+	// phpcs:disable Squiz.Commenting.FunctionComment.MissingParamTag
 	/**
 	 * Generate markdowns for all commands, generate manifest for commands markdown and generate manifest for handbook.
 	 *
@@ -46,35 +61,44 @@ class Docs {
 
 		\WP_CLI::success( 'Generated all doc pages.' );
 	}
+	// phpcs:enable
 
 	/**
 	 * Generate markdown file for each ee command.
 	 *
+	 * @return void
 	 */
 	private function gen_commands() {
 
 		$subcommands = self::get_subcommands();
 
 		foreach ( $subcommands as $cmd ) {
+
 			if ( 'handbook' === $cmd['name'] ) {
 				continue;
 			}
 
 			self::gen_cmd_pages( $cmd );
+
 		}
 
 		\WP_CLI::success( 'Generated all command pages.' );
 	}
 
-	public static function get_subcommands(){
+	/**
+	 * Function to get sub command.
+	 *
+	 * @return array
+	 */
+	public static function get_subcommands() {
 
-		$ee = shell_exec( 'php ' . EE_PHAR_FILE . ' site cmd-dump' );
-		$bundled_cmds = array();
-		$ee = json_decode( $ee, true );
+		$ee           = shell_exec( 'php ' . EE_PHAR_FILE . ' site cmd-dump' );
+		$bundled_cmds = [];
+		$ee           = json_decode( $ee, true );
 
 		foreach ( $ee['subcommands'] as $k => $cmd ) {
 
-			if ( in_array( $cmd['name'], array( 'website', 'api-dump' ) ) ) {
+			if ( in_array( $cmd['name'], [ 'website', 'api-dump' ], true ) ) {
 				unset( $ee['subcommands'][ $k ] );
 				continue;
 			}
@@ -89,25 +113,36 @@ class Docs {
 
 	/**
 	 * Update the commands data array with new data
+	 *
+	 * @param object $command       Command object.
+	 * @param array  $commands_data Contain command data.
+	 * @param string $parent        Parent command string.
+	 *
+	 * @return void
 	 */
 	private static function update_commands_data( $command, &$commands_data, $parent ) {
+
 		$full       = trim( $parent . ' ' . $command->get_name() );
 		$reflection = new \ReflectionClass( $command );
 		$repo_url   = '';
-		if ( 'help' === substr( $full, 0, 4 )
-		     || 'cli' === substr( $full, 0, 3 ) ) {
+
+		if ( 'help' === substr( $full, 0, 4 ) || 'cli' === substr( $full, 0, 3 ) ) {
 			$repo_url = 'https://github.com/EasyEngine/handbook';
 		}
+
 		if ( $reflection->hasProperty( 'when_invoked' ) ) {
 			$when_invoked = $reflection->getProperty( 'when_invoked' );
 			$when_invoked->setAccessible( true );
 			$closure            = $when_invoked->getValue( $command );
 			$closure_reflection = new \ReflectionFunction( $closure );
 			$static             = $closure_reflection->getStaticVariables();
+
 			if ( isset( $static['callable'][0] ) ) {
+
 				$reflection_class = new \ReflectionClass( $static['callable'][0] );
 				$filename         = $reflection_class->getFileName();
 				preg_match( '#vendor/([^/]+/[^/]+)#', $filename, $matches );
+
 				if ( ! empty( $matches[1] ) ) {
 					$repo_url = 'https://github.com/' . $matches[1];
 				}
@@ -115,14 +150,18 @@ class Docs {
 				\WP_CLI::error( 'No callable for: ' . var_export( $static, true ) );
 			}
 		}
-		$commands_data[ $full ] = array(
+
+		$commands_data[ $full ] = [
 			'repo_url' => $repo_url,
-		);
-		$len                    = count( $commands_data );
+		];
+
+		$len = count( $commands_data );
+
 		foreach ( $command->get_subcommands() as $subcommand ) {
 			$sub_full = trim( $full . ' ' . $subcommand->get_name() );
 			self::update_commands_data( $subcommand, $commands_data, $full );
 		}
+
 		if ( isset( $sub_full ) && ! $commands_data[ $full ]['repo_url'] && ! empty( $commands_data[ $sub_full ]['repo_url'] ) ) {
 			$commands_data[ $full ]['repo_url'] = $commands_data[ $sub_full ]['repo_url'];
 		}
@@ -130,23 +169,24 @@ class Docs {
 
 	/**
 	 * Generate `bin/commands-manifest.json` file from markdown in `commands` directory.
+	 *
+	 * @return void
 	 */
 	private function gen_commands_manifest() {
 
-		$manifest      = array();
-		$paths         = array(
+		$manifest      = [];
+		$paths         = [
 			$this->output_dir . '/commands/*.md',
 			$this->output_dir . '/commands/*/*.md',
 			$this->output_dir . '/commands/*/*/*.md',
-		);
-		$commands_data = array();
-
+		];
+		$commands_data = [];
 
 		foreach ( $paths as $path ) {
 
 			foreach ( glob( $path ) as $file ) {
 				$slug     = basename( $file, '.md' );
-				$cmd_path = str_replace( array( $this->output_dir . '/commands/', '.md' ), '', $file );
+				$cmd_path = str_replace( [ $this->output_dir . '/commands/', '.md' ], '', $file );
 				$title    = '';
 				$contents = file_get_contents( $file );
 				if ( preg_match( '/^#\s(.+)/', $contents, $matches ) ) {
@@ -160,13 +200,13 @@ class Docs {
 					$parent = implode( '/', $bits );
 				}
 
-				$manifest[ $cmd_path ] = array(
+				$manifest[ $cmd_path ] = [
 					'title'           => $title,
 					'slug'            => $slug,
 					'cmd_path'        => $cmd_path,
 					'parent'          => $parent,
 					'markdown_source' => sprintf( '%s/commands/%s.md', $this->output_dir, $cmd_path ),
-				);
+				];
 
 				if ( ! empty( $commands_data[ $title ] ) ) {
 					$manifest[ $cmd_path ] = array_merge( $manifest[ $cmd_path ], $commands_data[ $title ] );
@@ -183,7 +223,17 @@ class Docs {
 		\WP_CLI::success( "Generated commands-manifest.json of {$count} commands" );
 	}
 
-	private function gen_cmd_pages( $cmd, $parent = array(), $skip_global = false, $return_str = false ) {
+	/**
+	 * Function to generate command pages.
+	 *
+	 * @param array $cmd         Command details.
+	 * @param array $parent      Parent command.
+	 * @param bool  $skip_global To skip global variable.
+	 * @param bool  $return_str  To return string.
+	 *
+	 * @return mixed
+	 */
+	private function gen_cmd_pages( $cmd, $parent = [], $skip_global = false, $return_str = false ) {
 
 		$parent[] = $cmd['name'];
 		static $params;
@@ -201,31 +251,33 @@ class Docs {
 
 		foreach ( $parent as $i => $p ) {
 			$path .= $p . '/';
-			if ( $i < ( count( $parent ) -1 ) ) {
+			if ( $i < ( count( $parent ) - 1 ) ) {
 				$binding['breadcrumbs'] .= " &raquo; [{$p}]({$path})";
 			} else {
 				$binding['breadcrumbs'] .= " &raquo; {$p}";
 			}
 		}
 
-		$binding['has-subcommands'] = isset( $cmd['subcommands'] ) ? array( true ) : false;
+		$binding['has-subcommands'] = isset( $cmd['subcommands'] ) ? [ true ] : false;
 
 		if ( $cmd['longdesc'] ) {
 			$docs = $cmd['longdesc'];
 			$docs = htmlspecialchars( $docs, ENT_COMPAT, 'UTF-8' );
 
-			// decrease header level
+			// Decrease header level.
 			$docs = preg_replace( '/^## /m', '### ', $docs );
-			// escape `--` so that it doesn't get converted into `&mdash;`
+			// Escape `--` so that it doesn't get converted into `&mdash;`.
 			$docs = preg_replace( '/^(\[?)--/m', '\1\--', $docs );
 			$docs = preg_replace( '/^\s\s--/m', '  \1\--', $docs );
 
-			// Remove wordwrapping from docs
-			// Match words, '().,;', and --arg before/after the newline
-			$bits        = explode( "\n", $docs );
-			$in_yaml_doc = $in_code_bloc = false;
+			// Remove wordwrapping from docs.
+			// Match words, '().,;', and --arg before/after the newline.
+			$bits         = explode( "\n", $docs );
+			$in_yaml_doc  = false;
+			$in_code_bloc = false;
 
-			for ( $i = 0; $i < count( $bits ); $i++ ) {
+			$loop_limit = count( $bits );
+			for ( $i = 0; $i < $loop_limit; $i++ ) {
 				if ( ! isset( $bits[ $i ] ) || ! isset( $bits[ $i + 1 ] ) ) {
 					continue;
 				}
@@ -238,8 +290,9 @@ class Docs {
 				if ( $in_yaml_doc || $in_code_bloc ) {
 					continue;
 				}
-				if ( preg_match( '#([\w\(\)\.\,\;]|[`]{1})$#', $bits[ $i ] )
-				     && preg_match( '#^([\w\(\)\.\,\;`]|\\\--[\w]|[`]{1})#', $bits[ $i + 1 ] ) ) {
+				if ( preg_match( '#([\w\(\)\.\,\;]|[`]{1})$#', $bits[ $i ] ) &&
+					preg_match( '#^([\w\(\)\.\,\;`]|\\\--[\w]|[`]{1})#', $bits[ $i + 1 ] )
+				) {
 					$bits[ $i ] .= ' ' . $bits[ $i + 1 ];
 					unset( $bits[ $i + 1 ] );
 					--$i;
@@ -249,7 +302,7 @@ class Docs {
 
 			$docs = implode( "\n", $bits );
 
-			// hack to prevent double encoding in code blocks
+			// Hack to prevent double encoding in code blocks.
 			$docs              = preg_replace( '/ &lt; /', ' < ', $docs );
 			$docs              = preg_replace( '/ &gt; /', ' > ', $docs );
 			$docs              = preg_replace( '/ &lt;&lt;/', ' <<', $docs );
@@ -261,11 +314,14 @@ class Docs {
 |:----------------|:-----------------------------|
 EOT;
 			foreach ( $params as $param => $meta ) {
-				if ( false === $meta['runtime']
-				     || empty( $meta['desc'] )
-				     || ! empty( $meta['deprecated'] ) ) {
+
+				if ( false === $meta['runtime'] ||
+					empty( $meta['desc'] ) ||
+					! empty( $meta['deprecated'] )
+				) {
 					continue;
 				}
+
 				$param_arg = '--' . $param;
 				if ( ! empty( $meta['runtime'] ) && true !== $meta['runtime'] ) {
 					$param_arg .= $meta['runtime'];
@@ -286,12 +342,12 @@ EOT;
 					$replace_global = '$1' . PHP_EOL . PHP_EOL . $global_parameters;
 				}
 			}
-			$docs            = preg_replace( '/(#?## GLOBAL PARAMETERS).+/s', $replace_global, $docs );
+			$docs = preg_replace( '/(#?## GLOBAL PARAMETERS).+/s', $replace_global, $docs );
 
 			$binding['docs'] = $docs;
 		}
 
-		$path = $this->output_dir . "/commands/" . $binding['path'];
+		$path = $this->output_dir . '/commands/' . $binding['path'];
 
 		if ( ! is_dir( dirname( "$path.md" ) ) ) {
 			mkdir( dirname( "$path.md" ), 0777, true );
@@ -337,7 +393,7 @@ EOT;
 			foreach ( $command as $subcommand ) {
 				if ( $pop['name'] === $subcommand['name'] ) {
 					$md_doc .= $this->gen_cmd_pages( $subcommand, $parent, false, true );
-					$path   = $this->output_dir . "/commands/" . implode( '/', $parent ) . "/$name";
+					$path    = $this->output_dir . '/commands/' . implode( '/', $parent ) . "/$name";
 					if ( ! is_dir( dirname( $path ) ) ) {
 						mkdir( dirname( $path ) );
 					}
@@ -349,14 +405,22 @@ EOT;
 		}
 	}
 
+	/**
+	 * Function to render template.
+	 *
+	 * @param string $path    Path of template.
+	 * @param string $binding Binding content with template.
+	 *
+	 * @return string
+	 */
 	private function render( $path, $binding ) {
-		$m        = new \Mustache_Engine;
+		$m        = new \Mustache_Engine();
 		$template = file_get_contents( EE_MARKDOWN_PLUGIN_DIR . "/templates/$path" );
 
 		return $m->render( $template, $binding );
 	}
 }
 
-if ( defined( 'WP_CLI') && WP_CLI ) {
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	\WP_CLI::add_command( 'ee', '\WPOrg_Cli\Docs' );
 }

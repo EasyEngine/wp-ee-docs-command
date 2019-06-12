@@ -1,57 +1,128 @@
 <?php
+/**
+ * File to import hb markdown.
+ *
+ * @package ee-markdown-importer
+ */
+
 namespace WPOrg_Cli;
+
 use WP_Error;
 use WP_Query;
+
+/**
+ * Class to import hb markdown.
+ */
 class Markdown_Hb_Import {
+
+	/**
+	 * Variable to store command manifest file path.
+	 *
+	 * @var string
+	 */
 	private static $command_manifest = EE_DOC_OUTPUT_DIR . '/bin/handbook-manifest.json';
+
+	/**
+	 * Variable to store input name.
+	 *
+	 * @var string
+	 */
 	private static $input_name = 'wporg-cli-markdown-source';
+
+	/**
+	 * Variable to store meta key name.
+	 *
+	 * @var string
+	 */
 	private static $meta_key = 'wporg_cli_markdown_source';
+
+	/**
+	 * Variable to store nonce name.
+	 *
+	 * @var string
+	 */
 	private static $nonce_name = 'wporg-cli-markdown-source-nonce';
+
+	/**
+	 * Variable to store submit name.
+	 *
+	 * @var string
+	 */
 	private static $submit_name = 'wporg-cli-markdown-import';
 
-	private static $supported_post_types = array( 'handbook' );
+	/**
+	 * Variable to store supported post types.
+	 *
+	 * @var array
+	 */
+	private static $supported_post_types = [ 'handbook' ];
 
+	/**
+	 * Variable to store post per page limit.
+	 *
+	 * @var int
+	 */
 	private static $posts_per_page = 100;
 
+	/**
+	 * Function to handle manifest import functionality.
+	 *
+	 * @return mixed
+	 */
 	public static function action_wporg_cli_hb_manifest_import() {
+
 		$response = wp_remote_get( self::$command_manifest );
+
 		if ( is_wp_error( $response ) ) {
 			return $response;
-		} else if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		} elseif ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			return new WP_Error( 'invalid-http-code', 'Markdown source returned non-200 http code.' );
 		}
+
 		$manifest = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( ! $manifest ) {
 			return new WP_Error( 'invalid-manifest', 'Manifest did not unfurl properly.' );
 		}
-		// Fetch all command posts for comparison
-		$q        = new WP_Query( array(
-			'post_type'      => self::$supported_post_types,
-			'post_status'    => 'publish',
-			'posts_per_page' => self::$posts_per_page,
-		) );
+
+		// Fetch all command posts for comparison.
+		$q        = new WP_Query(
+			[
+				'post_type'      => self::$supported_post_types,
+				'post_status'    => 'publish',
+				'posts_per_page' => self::$posts_per_page,
+			]
+		);
 		$existing = $q->posts;
 		$created  = 0;
+
 		foreach ( $manifest as $doc ) {
-			// Already exists
-			if ( wp_filter_object_list( $existing, array( 'post_name' => $doc['slug'] ) ) ) {
+
+			// Already exists.
+			if ( wp_filter_object_list( $existing, [ 'post_name' => $doc['slug'] ] ) ) {
 				continue;
 			}
 			$post_parent = null;
 			if ( ! empty( $doc['parent'] ) ) {
-				// Find the parent in the existing set
-				$parents = wp_filter_object_list( $existing, array( 'post_name' => $doc['parent'] ) );
+
+				// Find the parent in the existing set.
+				$parents = wp_filter_object_list( $existing, [ 'post_name' => $doc['parent'] ] );
+
 				if ( ! empty( $parents ) ) {
 					$parent = array_shift( $parents );
 				} else {
-					// Create the parent and add it to the stack
+
+					// Create the parent and add it to the stack.
 					if ( isset( $manifest[ $doc['parent'] ] ) ) {
+
 						$parent_doc = $manifest[ $doc['parent'] ];
 						$parent     = self::create_post_from_manifest_doc( $parent_doc );
+
 						if ( $parent ) {
+
 							$created++;
 							$existing[] = $parent;
+
 						} else {
 							continue;
 						}
@@ -68,6 +139,7 @@ class Markdown_Hb_Import {
 				$existing[] = $post;
 			}
 		}
+
 		if ( class_exists( 'WP_CLI' ) ) {
 			\WP_CLI::success( "Successfully created {$created} command pages." );
 		}
@@ -78,38 +150,61 @@ class Markdown_Hb_Import {
 
 	/**
 	 * Create a new command page from the manifest document
+	 *
+	 * @param array $doc         Doc details.
+	 * @param mixed $post_parent Post parent ID.
+	 *
+	 * @return mixed
 	 */
 	private static function create_post_from_manifest_doc( $doc, $post_parent = null ) {
-		$post_data = array(
+
+		$post_data = [
 			'post_type'   => 'handbook',
 			'post_status' => 'publish',
 			'post_parent' => $post_parent,
 			'post_title'  => sanitize_text_field( wp_slash( $doc['title'] ) ),
 			'post_name'   => sanitize_title_with_dashes( $doc['slug'] ),
-		);
-		$post_id   = wp_insert_post( $post_data );
+		];
+
+		// Inserting new post.
+		$post_id = wp_insert_post( $post_data );
+
 		if ( ! $post_id ) {
 			return false;
 		}
+
 		if ( class_exists( 'WP_CLI' ) ) {
-			\WP_CLI::log( "Created post {$post_id} for {$doc['title']}." );
+			\WP_CLI::log( sprintf( 'Created post %d for %s.', $post_id, $doc['title'] ) );
 		}
+
 		update_post_meta( $post_id, self::$meta_key, esc_url_raw( $doc['markdown_source'] ) );
+
 		return get_post( $post_id );
 	}
 
+	/**
+	 * Function to handle markdown import.
+	 *
+	 * @return void
+	 */
 	public static function action_wporg_cli_hb_markdown_import() {
-		$q       = new WP_Query( array(
-			'post_type'      => self::$supported_post_types,
-			'post_status'    => 'publish',
-			'fields'         => 'ids',
-			'posts_per_page' => self::$posts_per_page,
-		) );
+
+		$q       = new WP_Query(
+			[
+				'post_type'      => self::$supported_post_types,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+				'posts_per_page' => self::$posts_per_page,
+			]
+		);
 		$ids     = $q->posts;
 		$success = 0;
+
 		foreach ( $ids as $id ) {
 			$ret = self::update_post_from_markdown_source( $id );
+
 			if ( class_exists( 'WP_CLI' ) ) {
+
 				if ( is_wp_error( $ret ) ) {
 					\WP_CLI::warning( $ret->get_error_message() );
 				} else {
@@ -118,42 +213,58 @@ class Markdown_Hb_Import {
 				}
 			}
 		}
+
 		if ( class_exists( 'WP_CLI' ) ) {
 			$total = count( $ids );
 			\WP_CLI::success( "Successfully updated {$success} of {$total} command pages." );
 		}
+
 	}
 
 	/**
 	 * Handle a request to import from the markdown source
 	 */
 	public static function action_load_post_php() {
-		if ( ! isset( $_GET[ self::$submit_name ] )
-			|| ! isset( $_GET[ self::$nonce_name ] )
-			|| ! isset( $_GET['post'] ) ) {
+
+		$submit_btn_name  = filter_input( INPUT_GET, self::$submit_name, FILTER_SANITIZE_STRING );
+		$nonce_field_name = filter_input( INPUT_GET, self::$nonce_name, FILTER_SANITIZE_STRING );
+		$post_id          = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
+
+		if ( empty( $submit_btn_name )
+			|| empty( $nonce_field_name )
+			|| empty( $post_id ) ) {
 			return;
 		}
-		$post_id = (int) $_GET['post'];
+
+		$post_id = (int) $post_id;
 		if ( ! current_user_can( 'edit_post', $post_id )
-			|| ! wp_verify_nonce( $_GET[ self::$nonce_name ], self::$input_name )
+			|| ! wp_verify_nonce( $nonce_field_name, self::$input_name )
 			|| ! in_array( get_post_type( $post_id ), self::$supported_post_types, true ) ) {
 			return;
 		}
+
 		$response = self::update_post_from_markdown_source( $post_id );
 		if ( is_wp_error( $response ) ) {
-			wp_die( $response->get_error_message() );
+			wp_die( esc_html( $response->get_error_message() ) );
 		}
+
 		wp_safe_redirect( get_edit_post_link( $post_id, 'raw' ) );
 		exit;
 	}
 
 	/**
 	 * Add an input field for specifying Markdown source
+	 *
+	 * @param Object $post Post Object.
+	 *
+	 * @return void
 	 */
 	public static function action_edit_form_after_title( $post ) {
+
 		if ( ! in_array( $post->post_type, self::$supported_post_types, true ) ) {
 			return;
 		}
+
 		$markdown_source = get_post_meta( $post->ID, self::$meta_key, true );
 		?>
 		<label>Markdown source: <input
@@ -162,14 +273,18 @@ class Markdown_Hb_Import {
 				value="<?php echo esc_attr( $markdown_source ); ?>"
 				placeholder="Enter a URL representing a markdown file to import"
 				size="50" />
-		</label> <?php
+		</label>
+		<?php
 		if ( $markdown_source ) :
-			$update_link = add_query_arg( array(
-				self::$submit_name => 'import',
-				self::$nonce_name  => wp_create_nonce( self::$input_name ),
-			), get_edit_post_link( $post->ID, 'raw' ) );
+			$update_link = add_query_arg(
+				[
+					self::$submit_name => 'import',
+					self::$nonce_name  => wp_create_nonce( self::$input_name ),
+				],
+				get_edit_post_link( $post->ID, 'raw' )
+			);
 			?>
-			<a class="button button-small button-primary" href="<?php echo esc_url( $update_link ); ?>">Import</a>
+			<a class="button button-small button-primary" href="<?php echo esc_url( $update_link ); ?>"><?php esc_html_e( 'Import', 'ee-markdown-importer' ); ?></a>
 		<?php endif; ?>
 		<?php wp_nonce_field( self::$input_name, self::$nonce_name ); ?>
 		<?php
@@ -177,38 +292,70 @@ class Markdown_Hb_Import {
 
 	/**
 	 * Save the Markdown source input field
+	 *
+	 * @param int $post_id Post Id.
+	 *
+	 * @return void
 	 */
 	public static function action_save_post( $post_id ) {
-		if ( ! isset( $_POST[ self::$input_name ] )
-			|| ! isset( $_POST[ self::$nonce_name ] )
+
+		$markdown_input_name = filter_input(
+			INPUT_POST,
+			self::$input_name,
+			FILTER_SANITIZE_URL
+		);
+
+		$markdown_nonce_name = filter_input(
+			INPUT_POST,
+			self::$nonce_name,
+			FILTER_SANITIZE_STRING
+		);
+
+		if ( ! isset( $markdown_input_name )
+			|| ! isset( $markdown_nonce_name )
 			|| ! in_array( get_post_type( $post_id ), self::$supported_post_types, true ) ) {
 			return;
 		}
-		if ( ! wp_verify_nonce( $_POST[ self::$nonce_name ], self::$input_name ) ) {
+
+		if ( ! wp_verify_nonce( $markdown_nonce_name, self::$input_name ) ) {
 			return;
 		}
+
 		$markdown_source = '';
-		if ( ! empty( $_POST[ self::$input_name ] ) ) {
-			$markdown_source = esc_url_raw( $_POST[ self::$input_name ] );
+		if ( ! empty( $markdown_input_name ) ) {
+			$markdown_source = esc_url_raw( $markdown_input_name );
 		}
+
 		update_post_meta( $post_id, self::$meta_key, $markdown_source );
+
 	}
 
 	/**
-	 * Filter cron schedules to add a 15 minute schedule
+	 * Filter cron schedules to add a 15 minute schedule.
+	 *
+	 * @param array $schedules Cron details.
+	 *
+	 * @return array
 	 */
 	public static function filter_cron_schedules( $schedules ) {
-		$schedules['15_minutes'] = array(
+
+		$schedules['15_minutes'] = [
 			'interval' => 15 * MINUTE_IN_SECONDS,
 			'display'  => '15 minutes',
-		);
+		];
+
 		return $schedules;
 	}
 
 	/**
-	 * Update a post from its Markdown source
+	 * Update a post from its Markdown source.
+	 *
+	 * @param int $post_id Post ID.
+	 *
+	 * @return mixed
 	 */
 	private static function update_post_from_markdown_source( $post_id ) {
+
 		$markdown_source = self::get_markdown_source( $post_id );
 
 		if ( is_wp_error( $markdown_source ) ) {
@@ -218,47 +365,59 @@ class Markdown_Hb_Import {
 			return new WP_Error( 'missing-jetpack-require-lib', 'jetpack_require_lib() is missing on system.' );
 		}
 
-		// Transform GitHub repo HTML pages into their raw equivalents
+		// Transform GitHub repo HTML pages into their raw equivalents.
 		$markdown_source = preg_replace( '#https?://github\.com/([^/]+/[^/]+)/blob/(.+)#', 'https://raw.githubusercontent.com/$1/$2', $markdown_source );
 		$markdown_source = add_query_arg( 'v', time(), $markdown_source );
 		$response        = wp_remote_get( $markdown_source );
+
 		if ( is_wp_error( $response ) ) {
 			return $response;
-		} else if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		} elseif ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			return new WP_Error( 'invalid-http-code', 'Markdown source returned non-200 http code.' );
 		}
+
 		$markdown = wp_remote_retrieve_body( $response );
 
-		// Strip YAML doc from the header
+		// Strip YAML doc from the header.
 		$markdown = preg_replace( '#^---(.+)---#Us', '', $markdown );
 		$title    = null;
+
 		if ( preg_match( '/^#\s(.+)/', $markdown, $matches ) ) {
 			$title    = $matches[1];
 			$markdown = preg_replace( '/^#\s(.+)/', '', $markdown );
 		}
 
-		// Transform to HTML and save the post
-		$parser = new \Parsedown();
+		// Transform to HTML and save the post.
+		$parser    = new \Parsedown();
 		$html      = $parser->text( $markdown );
-		$post_data = array(
+		$post_data = [
 			'ID'           => $post_id,
 			'post_content' => wp_filter_post_kses( wp_slash( $html ) ),
-		);
+		];
+
 		if ( ! is_null( $title ) ) {
 			$post_data['post_title'] = sanitize_text_field( wp_slash( $title ) );
 		}
 		wp_update_post( $post_data );
+
 		return true;
+
 	}
 
 	/**
 	 * Retrieve the markdown source URL for a given post.
+	 *
+	 * @param int $post_id Post ID.
+	 *
+	 * @return mixed
 	 */
 	public static function get_markdown_source( $post_id ) {
 		$markdown_source = get_post_meta( $post_id, self::$meta_key, true );
+
 		if ( ! $markdown_source ) {
 			return new WP_Error( 'missing-markdown-source', 'Markdown source is missing for post.' );
 		}
+
 		return $markdown_source;
 	}
 }
