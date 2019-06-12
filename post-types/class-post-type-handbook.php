@@ -62,7 +62,7 @@ class Post_Type_Handbook {
 	public function ee_wpghs_whitelisted_post_types( $supported_post_types ) {
 
 		return [
-			'handbook',
+			$this->post_type,
 		];
 	}
 
@@ -122,7 +122,7 @@ class Post_Type_Handbook {
 		$page_list = wp_list_pages(
 			[
 				'title_li'  => '',
-				'post_type' => 'handbook',
+				'post_type' => $this->post_type,
 				'child_of'  => $parent_page_id,
 				'echo'      => false,
 				'exclude'   => $post_id,
@@ -164,7 +164,7 @@ class Post_Type_Handbook {
 				'menu_name'          => esc_html_x( 'Handbook', 'Admin Menu text', 'ee-markdown-importer' ),
 			],
 			'rewrite'             => [
-				'slug'       => 'handbook',
+				'slug'       => $this->post_type,
 				'with_front' => false,
 			],
 			'show_in_rest'        => true,

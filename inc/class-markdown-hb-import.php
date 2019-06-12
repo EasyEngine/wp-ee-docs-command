@@ -141,7 +141,7 @@ class Markdown_Hb_Import {
 		}
 
 		if ( class_exists( 'WP_CLI' ) ) {
-			\WP_CLI::success( sprintf( 'Successfully created %s command pages.', $created ) );
+			\WP_CLI::success( "Successfully created {$created} command pages." );
 		}
 
 		// Run markdown importer after creating successful posts.
