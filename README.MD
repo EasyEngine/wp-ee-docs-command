@@ -9,7 +9,7 @@ Import command doc block from ee phar to WordPress Commands Posts.
 
 ```bash
 ee shell easyengine.io --user=root
-wp ee-docs commands --url=easyengine.io
+wp ee-docs commands --url=easyengine.io --allow-root
 ```
 
 Commands: https://easyengine.io/commands
